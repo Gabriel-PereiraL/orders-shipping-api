@@ -2,7 +2,7 @@
 COMPOSE := docker compose
 RUN := $(COMPOSE) run --rm app
 
-.PHONY: help up down install shell test test-unit stan cs cs-fix check
+.PHONY: help up down install shell migrate migrate-test test test-unit stan cs cs-fix check
 
 help: ## List the available targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/' | expand -t22
@@ -18,6 +18,12 @@ install: ## Install PHP dependencies inside the container
 
 shell: ## Open a shell in the application container
 	$(RUN) sh
+
+migrate: ## Apply migrations to the development database
+	$(RUN) vendor/bin/phinx migrate -e development
+
+migrate-test: ## Apply migrations to the integration test database
+	$(RUN) vendor/bin/phinx migrate -e test
 
 test: ## Run the whole test suite
 	$(RUN) vendor/bin/phpunit

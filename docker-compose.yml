@@ -28,8 +28,9 @@ services:
       MYSQL_DATABASE: "${DB_NAME:-orders}"
       MYSQL_USER: "${DB_USER:-orders}"
       MYSQL_PASSWORD: "${DB_PASSWORD:-orders}"
+    # Published on 3307 so a MySQL already running on the host does not clash.
     ports:
-      - "${DB_PORT_HOST:-3306}:3306"
+      - "${DB_PORT_HOST:-3307}:3306"
     volumes:
       - db-data:/var/lib/mysql
       - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
