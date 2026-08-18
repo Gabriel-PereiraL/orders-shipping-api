@@ -1,0 +1,46 @@
+# Defaults are inlined so that `docker compose up -d` works on a fresh clone
+# with no setup step. Copy .env.example to .env to override any of them.
+services:
+  app:
+    build: ./docker/php
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: "${DB_NAME:-orders}"
+      DB_USER: "${DB_USER:-orders}"
+      DB_PASSWORD: "${DB_PASSWORD:-orders}"
+      DB_TEST_NAME: orders_test
+      APP_CURRENCY: "${APP_CURRENCY:-BRL}"
+      SHIPPING_PROVIDER: "${SHIPPING_PROVIDER:-fake}"
+      SHIPPING_QUOTE_TTL_SECONDS: "${SHIPPING_QUOTE_TTL_SECONDS:-900}"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    command: --mysql-native-password=OFF
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-root}"
+      MYSQL_DATABASE: "${DB_NAME:-orders}"
+      MYSQL_USER: "${DB_USER:-orders}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-orders}"
+    ports:
+      - "${DB_PORT_HOST:-3306}:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # Nothing may talk to MySQL before it accepts connections, otherwise the
+      # first migration of a fresh clone fails for a reason that looks like a bug.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_ROOT_PASSWORD:-root}"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+volumes:
+  db-data:
