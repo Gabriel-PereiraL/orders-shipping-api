@@ -3,11 +3,17 @@
 declare(strict_types=1);
 
 use DI\ContainerBuilder;
+use OrderApi\Application\Order\ConfirmOrder;
+use OrderApi\Application\Order\CreateOrder;
 use OrderApi\Application\Port\Clock;
+use OrderApi\Application\Port\OrderRepository;
 use OrderApi\Application\Port\ProductRepository;
+use OrderApi\Application\Port\ShippingQuoteProvider;
 use OrderApi\Application\Product\CreateProduct;
 use OrderApi\Infrastructure\Clock\SystemClock;
+use OrderApi\Infrastructure\Persistence\Pdo\PdoOrderRepository;
 use OrderApi\Infrastructure\Persistence\Pdo\PdoProductRepository;
+use OrderApi\Infrastructure\Shipping\FakeShippingQuoteProvider;
 use Psr\Container\ContainerInterface;
 
 use function DI\autowire;
@@ -45,10 +51,16 @@ return static function (array $settings): ContainerInterface {
             );
         },
 
+        'quoteTtlSeconds' => $settings['shipping']['quote_ttl_seconds'],
+
         Clock::class => autowire(SystemClock::class),
         ProductRepository::class => autowire(PdoProductRepository::class),
+        OrderRepository::class => autowire(PdoOrderRepository::class),
+        ShippingQuoteProvider::class => autowire(FakeShippingQuoteProvider::class),
 
         CreateProduct::class => autowire()->constructorParameter('currency', get('currency')),
+        CreateOrder::class => autowire()->constructorParameter('currency', get('currency')),
+        ConfirmOrder::class => autowire()->constructorParameter('quoteTtlSeconds', get('quoteTtlSeconds')),
     ]);
 
     return $builder->build();
