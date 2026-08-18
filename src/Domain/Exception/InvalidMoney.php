@@ -11,7 +11,7 @@ namespace OrderApi\Domain\Exception;
  * in the application catches these cases individually, so splitting them would
  * only add files.
  */
-final class InvalidMoney extends DomainException
+final class InvalidMoney extends InvalidInput
 {
     public static function negativeAmount(int $cents): self
     {
