@@ -19,4 +19,9 @@ final class ResourceNotFound extends RuntimeException
     {
         return new self(sprintf('Product %s was not found.', $id));
     }
+
+    public static function order(string $id): self
+    {
+        return new self(sprintf('Order %s was not found.', $id));
+    }
 }
