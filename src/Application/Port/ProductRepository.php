@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OrderApi\Application\Port;
 
+use OrderApi\Application\Exception\DuplicateSku;
 use OrderApi\Domain\Product\Product;
 
 /**
@@ -15,6 +16,9 @@ use OrderApi\Domain\Product\Product;
  */
 interface ProductRepository
 {
+    /**
+     * @throws DuplicateSku when another product already uses that sku
+     */
     public function save(Product $product): void;
 
     public function findById(string $id): ?Product;

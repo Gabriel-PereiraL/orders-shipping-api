@@ -45,6 +45,39 @@ final class Order
         $this->destinationZipCode = self::normalizeZipCode($destinationZipCode);
     }
 
+    /**
+     * Rebuilds an order that was already valid when it was stored.
+     *
+     * This deliberately skips the rules the other methods enforce. Replaying
+     * them on load would mean an order could stop being loadable because a rule
+     * changed after it was placed, which is exactly the history-rewriting the
+     * price snapshot exists to prevent. Only repositories should call it.
+     *
+     * @param list<OrderItem> $items
+     */
+    public static function reconstitute(
+        string $id,
+        string $destinationZipCode,
+        string $currency,
+        DateTimeImmutable $createdAt,
+        OrderStatus $status,
+        array $items,
+        ?ShippingQuote $shippingQuote,
+        ?DateTimeImmutable $confirmedAt,
+    ): self {
+        $order = new self($id, $destinationZipCode, $currency, $createdAt);
+
+        foreach ($items as $item) {
+            $order->items[$item->productId] = $item;
+        }
+
+        $order->shippingQuote = $shippingQuote;
+        $order->status = $status;
+        $order->confirmedAt = $confirmedAt;
+
+        return $order;
+    }
+
     public function addItem(Product $product, int $quantity): void
     {
         $this->assertNotConfirmed();
