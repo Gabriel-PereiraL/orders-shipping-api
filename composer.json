@@ -5,6 +5,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "guzzlehttp/guzzle": "^7.9",
         "php-di/php-di": "^7.0",
         "ramsey/uuid": "^4.7",
         "robmorgan/phinx": "^0.16",

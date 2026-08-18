@@ -15,7 +15,12 @@ return [
     ],
     'currency' => getenv('APP_CURRENCY') ?: 'BRL',
     'shipping' => [
+        // "fake" runs the local carrier simulator, "http" talks to a real one.
         'provider' => getenv('SHIPPING_PROVIDER') ?: 'fake',
         'quote_ttl_seconds' => (int) (getenv('SHIPPING_QUOTE_TTL_SECONDS') ?: 900),
+        'carrier' => getenv('SHIPPING_HTTP_CARRIER') ?: 'carrier',
+        'base_url' => getenv('SHIPPING_HTTP_BASE_URL') ?: '',
+        'timeout_seconds' => (float) (getenv('SHIPPING_HTTP_TIMEOUT_SECONDS') ?: 2.0),
+        'connect_timeout_seconds' => (float) (getenv('SHIPPING_HTTP_CONNECT_TIMEOUT_SECONDS') ?: 1.0),
     ],
 ];

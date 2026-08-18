@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use DI\ContainerBuilder;
+use GuzzleHttp\Client;
 use OrderApi\Application\Order\ConfirmOrder;
 use OrderApi\Application\Order\CreateOrder;
 use OrderApi\Application\Port\Clock;
@@ -14,6 +15,7 @@ use OrderApi\Infrastructure\Clock\SystemClock;
 use OrderApi\Infrastructure\Persistence\Pdo\PdoOrderRepository;
 use OrderApi\Infrastructure\Persistence\Pdo\PdoProductRepository;
 use OrderApi\Infrastructure\Shipping\FakeShippingQuoteProvider;
+use OrderApi\Infrastructure\Shipping\HttpShippingQuoteProvider;
 use Psr\Container\ContainerInterface;
 
 use function DI\autowire;
@@ -56,7 +58,30 @@ return static function (array $settings): ContainerInterface {
         Clock::class => autowire(SystemClock::class),
         ProductRepository::class => autowire(PdoProductRepository::class),
         OrderRepository::class => autowire(PdoOrderRepository::class),
-        ShippingQuoteProvider::class => autowire(FakeShippingQuoteProvider::class),
+        // The one switch that decides whether this application talks to a real
+        // carrier. Everything above the port is identical either way, which is
+        // the whole point of having the port.
+        ShippingQuoteProvider::class => static function (ContainerInterface $container) use ($settings): ShippingQuoteProvider {
+            $shipping = $settings['shipping'];
+            $clock = $container->get(Clock::class);
+
+            if ($shipping['provider'] !== 'http') {
+                return new FakeShippingQuoteProvider($clock);
+            }
+
+            if ($shipping['base_url'] === '') {
+                throw new RuntimeException('SHIPPING_HTTP_BASE_URL must be set when SHIPPING_PROVIDER=http.');
+            }
+
+            return new HttpShippingQuoteProvider(
+                new Client(['base_uri' => $shipping['base_url']]),
+                $clock,
+                $shipping['carrier'],
+                'quotes',
+                $shipping['timeout_seconds'],
+                $shipping['connect_timeout_seconds'],
+            );
+        },
 
         CreateProduct::class => autowire()->constructorParameter('currency', get('currency')),
         CreateOrder::class => autowire()->constructorParameter('currency', get('currency')),
